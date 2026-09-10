@@ -1,30 +1,24 @@
-# Booking Management System
+# Система управления бронированием
 
-A hotel room booking API built with **FastAPI** + **SQLAlchemy 2.0** + **PostgreSQL**,
-featuring authentication (JWT access/refresh), searchable listings, a reservation
-workflow, a content-based recommendation engine, and a manager back-office.
+# API для бронирования гостиничных номеров, разработанный с использованием **FastAPI**, **SQLAlchemy 2.0** и **PostgreSQL**.
+Система включает функции аутентификации (JWT access/refresh), поиск и просмотр списка номеров, процесс оформления бронирования, механизм рекомендаций на основе характеристик контента, а также панель управления для администратора.
 
-## Features
+## Функции
 
-- **Search & filters** — list bookings with pagination, filtering by location, date
-  range, and price range.
-- **Booking detail page** — `GET /bookings/{id}` (also logs a view, feeding the
-  recommender).
-- **Auth** — registration, login (JWT access + refresh tokens), password change,
-  token refresh.
-- **Reservations** — create, confirm, cancel, and list "my reservations".
-- **AI recommendations** — `GET /recommendations` suggests alternative bookings
-  based on a user's viewing/booking history (see `app/services/recommendation_service.py`).
-- **Manager back-office** — a `manager` role can create/edit/delete booking
-  listings and moderate (approve/cancel) any user's reservation.
+- **Поиск и фильтры** — список бронирований с пагинацией и фильтрацией по местоположению, диапазону дат и цене.
+- **Страница с детальной информацией о бронировании** — `GET /bookings/{id}` (также фиксирует факт просмотра, данные которого используются системой рекомендаций).
+- **Аутентификация** — регистрация, вход (JWT-токены доступа и обновления), смена пароля, обновление токена.
+- **Бронирования** — создание, подтверждение, отмена и просмотр списка «моих бронирований».
+- **AI-рекомендации** — `GET /recommendations` предлагает альтернативные варианты бронирования на основе истории просмотров и заказов пользователя (см. `app/services/recommendation_service.py`).
+- **Бэк-офис менеджера** — роль `manager` позволяет создавать, редактировать и удалять предложения по бронированию, а также модерировать (подтверждать или отменять) любые бронирования пользователей.
 
-## Tech stack
+## Технологический стек
 
 Python 3.12, FastAPI, SQLAlchemy 2.0 (typed models), Alembic migrations,
-PostgreSQL 16, JWT (`python-jose`), `passlib`/`bcrypt` password hashing,
-Pytest + `httpx` for tests, Docker Compose for deployment.
+PostgreSQL 16, JWT (`python-jose`), `passlib`/`bcrypt` хеширование паролей,
+Pytest + `httpx` для тестов, Docker Compose для развертывания.
 
-## Data model
+## Модель данных
 
 ```
 users            id, first_name, last_name, login (unique), hashed_password, role, created_at
@@ -33,21 +27,7 @@ reservations     id, user_id -> users, booking_id -> bookings, status, guests, t
 view_history     id, user_id -> users, booking_id -> bookings, viewed_at
 ```
 
-**Why `Booking` and `Reservation` are separate tables (normalization note):**
-the spec's literal `Booking` table mixes the *listing* (name/location/price/
-description) with the *status of one guest's booking of it*
-(`confirmation_status`). Keeping both on one row would mean either duplicating
-listing data per guest or making it impossible for two different users to book
-the same listing — a 3NF violation, since `confirmation_status` would then
-depend on "which user booked which date," not on the Booking's own primary
-key. Splitting them keeps every column functionally dependent only on its own
-table's key: `Booking` keeps the required fields (id, name, date, location,
-price, description, confirmation_status — used here as the *listing's*
-publish status), and `Reservation` tracks each guest's own booking and its
-own confirmation status. `ViewHistory` is a third table purely to drive the
-recommendation engine.
-
-## Project layout
+## Компоновка проекта
 
 ```
 app/
@@ -64,28 +44,25 @@ scripts/          create_manager.py — CLI to bootstrap the first manager accou
 docker-compose.yml, Dockerfile, docker-entrypoint.sh
 ```
 
-## Running with Docker Compose
+## Запуск с помощью Docker Compose
 
 ```bash
-cp .env.example .env        # adjust SECRET_KEY etc. for real deployments
+cp .env.example .env        # скорректировать SECRET_KEY etc. для реального запуска.
 docker compose up --build
 ```
 
-This builds the API image, starts Postgres, waits for it to be healthy, runs
-`alembic upgrade head` automatically (see `docker-entrypoint.sh`), then starts
-Uvicorn. The API is then available at `http://localhost:8000`, interactive
-docs at `http://localhost:8000/docs`.
+Эта команда собирает образ API, запускает Postgres, дожидается его готовности к работе, автоматически выполняет `alembic upgrade head` (см. `docker-entrypoint.sh`), 
+а затем запускает Uvicorn. После этого API становится доступен по адресу `http://localhost:8000`, а интерактивная документация — по адресу `http://localhost:8000/docs`.
 
-Create the first manager account (registration only ever creates `user`
-accounts, by design — nobody should be able to grant themselves manager
-rights through the public API):
+Создайте первую учетную запись менеджера (по замыслу, при регистрации создаются только учетные записи типа `user` — никто не должен иметь 
+возможности самостоятельно присвоить себе права менеджера через публичный API):
 
 ```bash
 docker compose exec api python scripts/create_manager.py \
-    --first-name Jane --last-name Doe --login jane.manager --password Str0ngPass1
+    --first-name Yakov --last-name Krilov --login yakov.manager --password Str0ngPass1
 ```
 
-## Running locally (without Docker)
+## Локальный запуск.
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
@@ -95,17 +72,17 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-## Running tests
+## Запуск тестов
 
-Tests use an isolated in-memory SQLite database per test (via fixtures in
-`tests/conftest.py`), so no running Postgres/Docker is required:
+Для каждого теста используется изолированная база данных SQLite, работающая в оперативной памяти (через фикстуры в файле `tests/conftest.py`), 
+поэтому запуск Postgres или Docker не требуется:
 
 ```bash
 pip install -r requirements.txt
 pytest
 ```
 
-## API overview
+## Обзор API 
 
 | Area | Endpoint | Auth |
 |---|---|---|
