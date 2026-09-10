@@ -1,0 +1,10 @@
+[tool.black]
+line-length = 99
+target-version = ["py312"]
+
+[tool.flake8]
+max-line-length = 99
+exclude = [".venv", "alembic/versions"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
