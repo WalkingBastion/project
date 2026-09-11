@@ -1,0 +1,24 @@
+# Standalone frontend stack. By default it expects a service named
+# "backend" reachable on the "booking_network" external network - i.e.
+# your existing backend docker-compose.yml (see ../booking_system).
+# Point BACKEND_HOST/BACKEND_PORT at wherever your API actually runs if
+# that's not the case (e.g. a remote host).
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+    restart: unless-stopped
+    environment:
+      BACKEND_HOST: ${BACKEND_HOST:-backend}
+      BACKEND_PORT: ${BACKEND_PORT:-8000}
+    ports:
+      - "3000:80"
+    networks:
+      - booking_network
+
+networks:
+  booking_network:
+    external: true
+    name: ${BACKEND_NETWORK:-booking_system_default}

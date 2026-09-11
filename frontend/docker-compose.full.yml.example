@@ -1,0 +1,49 @@
+# Example of a single combined stack (backend + frontend) in one file.
+# Drop this at the root of a monorepo containing both project folders
+# (adjust the `context` paths to wherever you've placed each repo), or
+# copy the two service blocks into whichever docker-compose.yml you'd
+# rather keep as your source of truth.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-booking_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-booking_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-booking_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-booking_user} -d ${POSTGRES_DB:-booking_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./booking_system
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-booking_user}:${POSTGRES_PASSWORD:-booking_pass}@db:5432/${POSTGRES_DB:-booking_db}
+      SECRET_KEY: ${SECRET_KEY:-change-this-secret-key-in-production}
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./booking_frontend
+      args:
+        VITE_API_BASE_URL: /api/v1
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      BACKEND_HOST: backend
+      BACKEND_PORT: 8000
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:
