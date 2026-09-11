@@ -106,9 +106,13 @@ pytest
 | Manager | `PATCH /api/v1/manager/reservations/{id}/status` | manager |
 | Manager | `GET /api/v1/manager/stats` | manager |
 
-Invalid input (bad types, out-of-range values, missing fields) returns a
-`422` with a structured `{"detail": ..., "errors": [...]}` body via the
-custom validation-exception handler in `app/main.py`. Business-rule errors
-(duplicate login, wrong password, unavailable booking, unauthorized access
-to another user's reservation) return `400`/`401`/`403`/`404`/`409` as
-appropriate.
+При получении некорректных входных данных (неверные типы, значения вне допустимого диапазона, отсутствие обязательных полей) 
+возвращается ответ со статусом `422` и структурированным телом `{"detail": ..., "errors": [...]}`; 
+обработка осуществляется с помощью специального обработчика исключений валидации, определенного в `app/main.py`. 
+Ошибки, связанные с бизнес-логикой (дублирование логина, неверный пароль, недоступность бронирования, попытка доступа к чужому бронированию), 
+приводят к возврату соответствующих кодов состояния: `400`, `401`, `403`, `404` или `409`.
+
+## Фронт-Энд. 
+
+Добавлен README для Фронт-Энд части проекта в репозитории frontend. 
+12 Тест-Файлов и 45 тестов успешно проходят проверку.
